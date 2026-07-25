@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Yogesh Muthukumar — Supply Chain × Data Systems</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Archivo+Narrow:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  :root{
+    --black:#050609; --char:#0C0E13; --ink:#F2F5FA; --dim:#8C94A3; --faint:#2A2F3A;
+    --rose:#FF3D7F; --orange:#FF7A2F; --amber:#FFC53D; --green:#3DDC84;
+    --teal:#2AD9CE; --violet:#9B6BFF; --navy:#3C6BFF;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--black); color:var(--ink); font-family:'Inter',sans-serif; line-height:1.55; -webkit-font-smoothing:antialiased;}
+  ::selection{background:var(--teal); color:#000;}
+  #stage{position:fixed; inset:0; z-index:0;}
+  #track{height:1900vh;}
+  .vignette{position:fixed; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(120% 80% at 50% 40%, transparent 42%, rgba(0,0,0,.5) 78%, rgba(0,0,0,.82) 100%);}
+  main{position:relative; z-index:3;}
+  .wrap{max-width:1240px; margin:0 auto; padding:0 clamp(20px,4vw,52px);}
+
+  header{position:fixed; top:0; left:0; right:0; z-index:40; padding:22px clamp(20px,4vw,52px);
+    display:flex; justify-content:space-between; align-items:flex-start; pointer-events:none;}
+  header *{pointer-events:auto;}
+  .mark{font-family:'Archivo Narrow',sans-serif; font-weight:700; font-size:clamp(15px,1.5vw,19px);
+    letter-spacing:.34em; text-transform:uppercase; line-height:1;}
+  .mark small{display:block; font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.28em;
+    color:var(--dim); margin-top:7px; font-weight:400;}
+  .topnav{display:flex; gap:22px; align-items:center;}
+  .topnav a{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.2em; color:var(--dim);
+    text-decoration:none; text-transform:uppercase; transition:color .2s;}
+  .topnav a:hover{color:var(--ink);}
+  .topnav .cta{color:#000!important; background:var(--ink); padding:9px 17px; border-radius:2px; font-weight:600;}
+  .topnav .cta:hover{background:var(--teal);}
+  .langsw{display:flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace; font-size:10.5px;
+    letter-spacing:.1em; color:var(--dim);}
+  .langsw button{background:none; border:none; color:var(--dim); cursor:pointer; font-family:inherit;
+    font-size:inherit; letter-spacing:inherit; padding:4px 2px; transition:color .2s;}
+  .langsw button.on{color:var(--ink); font-weight:700;}
+  .langsw button:hover{color:var(--teal);}
+  @media(max-width:880px){ .topnav a:not(.cta){display:none;} }
+
+  .ch-hud{position:fixed; left:clamp(20px,4vw,52px); bottom:26px; z-index:35;
+    font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.3em; color:var(--dim);
+    display:flex; align-items:center; gap:12px;}
+  .ch-hud .bar{width:100px; height:1px; background:var(--faint); position:relative;}
+  .ch-hud .bar i{position:absolute; left:0; top:-1px; height:3px; background:var(--teal); width:0%;}
+  .scroll-cue{position:fixed; right:clamp(20px,4vw,52px); bottom:26px; z-index:20;
+    font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.3em; color:var(--dim);
+    display:flex; align-items:center; gap:10px; transition:opacity .5s;}
+  .scroll-cue i{display:block; width:34px; height:1px; background:linear-gradient(90deg,var(--faint),var(--ink));}
+
+  /* STATIONS */
+  .station{position:fixed; inset:0; z-index:5; display:flex; align-items:center; padding:0 clamp(24px,7vw,90px);
+    opacity:0; visibility:hidden; pointer-events:none; transition:opacity .8s cubic-bezier(.4,0,.2,1), visibility .8s;}
+  .station.visible{opacity:1; visibility:visible;}
+  .st-card{max-width:600px; position:relative; padding-left:26px;}
+  .st-card::before{content:''; position:absolute; left:0; top:4px; bottom:4px; width:3px; background:var(--accent,var(--teal));
+    box-shadow:0 0 18px var(--accent,var(--teal));}
+  .st-card.right{margin-left:auto; text-align:right; padding-left:0; padding-right:26px;}
+  .st-card.right::before{left:auto; right:0;}
+  .st-card.right .spec div{flex-direction:row;}
+  .st-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.4em;
+    text-transform:uppercase; display:block; margin-bottom:14px;}
+  .st-card h1{font-family:'Archivo',sans-serif; font-weight:800; text-transform:uppercase;
+    font-size:clamp(36px,5.6vw,78px); line-height:.95; letter-spacing:-.026em; text-shadow:0 4px 40px rgba(0,0,0,.85);}
+  .st-card h2{font-family:'Archivo',sans-serif; font-weight:800; text-transform:uppercase;
+    font-size:clamp(30px,4.4vw,58px); line-height:.98; letter-spacing:-.025em; text-shadow:0 4px 40px rgba(0,0,0,.85);}
+  .st-card p{color:#D2D8E2; margin-top:15px; font-size:15.5px; text-shadow:0 2px 18px rgba(0,0,0,.95);}
+  .st-card p b{color:var(--ink); font-weight:600;}
+  .spec{margin-top:20px; max-width:430px; font-family:'IBM Plex Mono',monospace;}
+  .spec div{display:flex; justify-content:space-between; gap:20px; padding:7px 0; font-size:11px; letter-spacing:.05em;}
+  .spec div span:first-child{color:#8792A8; text-transform:uppercase; letter-spacing:.2em; text-shadow:0 2px 12px rgba(0,0,0,1);}
+  .spec div span:last-child{color:var(--ink); text-align:right; text-shadow:0 2px 12px rgba(0,0,0,1);}
+  .role-tag{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.28em; color:var(--dim); margin-top:20px; text-transform:uppercase;}
+  .role-tag b{color:var(--ink);}
+  .open-pill{display:inline-flex; align-items:center; gap:8px; font-family:'IBM Plex Mono',monospace; font-size:10.5px;
+    letter-spacing:.2em; text-transform:uppercase; color:#000; background:var(--teal); padding:8px 16px; border-radius:20px; margin-top:20px;}
+  .open-pill::before{content:''; width:7px; height:7px; border-radius:50%; background:#000; animation:pulse2 1.6s infinite;}
+  @keyframes pulse2{0%,100%{opacity:1;}50%{opacity:.35;}}
+
+  /* ---------- MASSIVE COVER HERO ---------- */
+  .cover{position:fixed; inset:0; z-index:8; display:flex; flex-direction:column; justify-content:flex-end;
+    padding:0 clamp(20px,4.4vw,56px) clamp(30px,6vh,64px); opacity:0; visibility:hidden; pointer-events:none;
+    transition:opacity .9s cubic-bezier(.4,0,.2,1), visibility .9s;}
+  .cover.visible{opacity:1; visibility:visible; pointer-events:auto;}
+  .cover-ghost{position:absolute; top:8vh; left:clamp(20px,4.4vw,56px); font-family:'Archivo',sans-serif; font-weight:800;
+    font-size:clamp(180px,32vw,520px); line-height:1; color:transparent; -webkit-text-stroke:1px rgba(242,245,250,.09);
+    letter-spacing:-.05em; user-select:none;}
+  .cover-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.5em; text-transform:uppercase;
+    color:var(--teal); margin-bottom:18px;}
+  .cover-name{font-family:'Archivo',sans-serif; font-weight:800; text-transform:uppercase;
+    font-size:clamp(52px,10.2vw,168px); line-height:.86; letter-spacing:-.035em; max-width:1100px;
+    text-shadow:0 10px 60px rgba(0,0,0,.55);}
+  .cover-name .ln{display:block; overflow:hidden; position:relative; padding-bottom:.08em;}
+  .cover-name .ln .chars{display:inline-block;}
+  .cover-name .ln .chars span{display:inline-block; opacity:0; transform:translateY(72%) rotate(4deg);
+    animation:letterUp .72s cubic-bezier(.2,.9,.15,1) forwards;}
+  .cover-name .ln:nth-child(2) .chars span{color:var(--teal);}
+  @keyframes letterUp{to{opacity:1; transform:translateY(0) rotate(0);}}
+  .cover-name .ln::after{content:''; position:absolute; left:0; bottom:0; height:3px; width:0;
+    background:var(--teal); box-shadow:0 0 14px var(--teal); animation:drawLine .5s ease-out forwards;}
+  .cover-name .ln:nth-child(1)::after{animation-delay:.62s;}
+  .cover-name .ln:nth-child(2)::after{animation-delay:1.02s; background:var(--ink); box-shadow:none;}
+  @keyframes drawLine{to{width:100%;}}
+  .cover-bottom{display:flex; justify-content:space-between; align-items:flex-end; gap:28px; margin-top:28px; flex-wrap:wrap;}
+  .cover-desc{max-width:480px; color:#B8C0CE; font-size:15px; text-shadow:0 1px 14px rgba(0,0,0,.8);}
+  .cover-desc b{color:var(--ink);}
+  .cover-meta{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.18em; color:var(--dim);
+    text-align:right; text-transform:uppercase; line-height:1.9;}
+  .cover-meta b{color:var(--ink); font-weight:500;}
+  @media(max-width:760px){ .cover-bottom{flex-direction:column; align-items:flex-start;} .cover-meta{text-align:left;} }
+
+  .city-label{position:fixed; z-index:6; pointer-events:none; opacity:0; transition:opacity .5s; font-family:'IBM Plex Mono',monospace; transform:translate(-50%,-130%); text-shadow:0 1px 10px rgba(0,0,0,.95);}
+  .city-label .cn{font-size:12px; letter-spacing:.24em; color:var(--ink); font-weight:600;}
+  .city-label .cc{font-size:9.5px; color:var(--dim); letter-spacing:.1em; margin-top:2px;}
+  .city-label::after{content:''; display:block; width:1px; height:20px; margin:5px auto 0; background:linear-gradient(var(--teal), transparent);}
+
+  /* FLAT ZONE — Work / FAQ / Contact */
+  .flatzone{position:relative; background:linear-gradient(rgba(5,6,9,0), rgba(5,6,9,.9) 9%, var(--black) 20%);}
+  section.flat{padding:14vh 0;}
+  .mega{font-family:'Archivo',sans-serif; font-weight:800; text-transform:uppercase; font-size:clamp(54px,11.5vw,190px);
+    line-height:.84; letter-spacing:-.04em; text-shadow:0 0 90px rgba(242,245,250,.16);}
+  .mega span{color:transparent; -webkit-text-stroke:1.4px rgba(242,245,250,.3);}
+  .eyebrow{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.44em; text-transform:uppercase; color:var(--dim); display:block; margin-bottom:18px;}
+  .acc{border-top:1px solid var(--faint); margin-top:8vh;}
+  .acc-item{border-bottom:1px solid var(--faint);}
+  .acc-btn{width:100%; background:none; border:none; cursor:pointer; color:var(--ink); text-align:left;
+    display:flex; align-items:center; gap:clamp(14px,2.6vw,30px); padding:clamp(20px,2.9vh,30px) 2px;
+    transition:padding-left .18s cubic-bezier(.2,.9,.2,1);}
+  .acc-btn:hover{padding-left:16px;}
+  .acc-q{font-family:'Archivo',sans-serif; font-weight:700; text-transform:uppercase; font-size:clamp(17px,2.5vw,32px); letter-spacing:-.015em; flex:1; line-height:1.06;}
+  .acc-n{font-family:'IBM Plex Mono',monospace; font-size:11px; color:#5C6474; min-width:30px;}
+  .acc-plus{font-family:'IBM Plex Mono',monospace; font-size:22px; color:#5C6474; transition:transform .18s cubic-bezier(.2,.9,.2,1), color .18s;}
+  .acc-item.open .acc-plus{transform:rotate(45deg); color:var(--teal);}
+  .acc-body{max-height:0; overflow:hidden; transition:max-height .26s cubic-bezier(.2,.9,.2,1);}
+  .acc-in{padding:0 2px 30px calc(30px + clamp(14px,2.6vw,30px));}
+  .acc-in p{color:#A8B0BF; max-width:660px; font-size:15px;}
+  .acc-in p b{color:var(--ink);}
+  .acc-in .metrics{display:flex; gap:clamp(20px,4vw,56px); margin:20px 0; flex-wrap:wrap;}
+  .acc-in .metrics div{font-family:'IBM Plex Mono',monospace;}
+  .acc-in .metrics b{display:block; font-size:clamp(26px,3.3vw,42px); line-height:1; font-weight:600;}
+  .acc-in .metrics span{font-size:9.5px; letter-spacing:.22em; color:var(--dim); text-transform:uppercase;}
+  .chips{display:flex; flex-wrap:wrap; gap:7px; margin-top:14px;}
+  .chips em{font-style:normal; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.1em; padding:5px 11px; border:1px solid rgba(120,132,155,.3); border-radius:2px; color:#9AA3B3;}
+  .lnks{margin-top:20px; display:flex; gap:16px; flex-wrap:wrap;}
+  .lnks a{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.1em; color:var(--ink); text-decoration:none; border-bottom:1px solid var(--teal); padding-bottom:2px;}
+
+  .contact-grid{display:grid; grid-template-columns:1.05fr .95fr; gap:clamp(28px,5vw,76px); margin-top:8vh;}
+  @media(max-width:820px){.contact-grid{grid-template-columns:1fr;}}
+  .field{margin-bottom:18px;}
+  .field label{display:block; font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.3em; color:var(--dim); text-transform:uppercase; margin-bottom:8px;}
+  .field input,.field textarea{width:100%; background:transparent; border:none; border-bottom:1px solid var(--faint); color:var(--ink); font-family:'Inter',sans-serif; font-size:16px; padding:10px 2px; outline:none; transition:border-color .2s; resize:none;}
+  .field input:focus,.field textarea:focus{border-color:var(--teal);}
+  .err{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--amber); min-height:15px; margin-bottom:14px;}
+  .send{font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.16em; text-transform:uppercase; background:var(--ink); color:#000; border:none; padding:16px 34px; cursor:pointer; font-weight:600; border-radius:2px; transition:background .2s, transform .15s;}
+  .send:hover{background:var(--teal); transform:translateY(-2px);}
+  .sidelinks{display:flex; flex-direction:column; border-top:1px solid var(--faint);}
+  .sidelinks a,.sidelinks button{display:flex; justify-content:space-between; align-items:center; padding:21px 2px; border:none; border-bottom:1px solid var(--faint); background:none; color:var(--ink); text-decoration:none; cursor:pointer; font-family:'Archivo',sans-serif; font-weight:700; text-transform:uppercase; font-size:clamp(15px,1.8vw,20px); letter-spacing:-.01em; text-align:left; transition:padding-left .18s cubic-bezier(.2,.9,.2,1), color .2s;}
+  .sidelinks a:hover,.sidelinks button:hover{padding-left:14px; color:var(--teal);}
+  .sidelinks span{font-family:'IBM Plex Mono',monospace; font-size:14px; color:#5C6474;}
+  .sent{font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--teal); line-height:1.75; border:1px solid rgba(42,217,206,.32); background:rgba(42,217,206,.05); padding:18px 20px; border-radius:3px;}
+  footer{padding:38px clamp(20px,4vw,52px); display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.2em; text-transform:uppercase; color:#4A5261; border-top:1px solid rgba(42,47,58,.7);}
+  .fade{opacity:0; transform:translateY(22px); transition:opacity .7s ease, transform .7s ease;}
+  .fade.in{opacity:1; transform:none;}
+</style>
+</head>
+<body>
+
+<canvas id="stage"></canvas>
+<div class="vignette"></div>
+
+<header>
+  <div class="mark">Yogesh&nbsp;Muthukumar<small>Supply Chain × Data Systems</small></div>
+  <nav class="topnav">
+    <a href="#work" data-i18n="nav-work">Work</a><a href="#faq" data-i18n="nav-faq">FAQ</a>
+    <a class="cta" href="#contact" data-i18n="nav-contact">Contact</a>
+    <span class="langsw" id="langsw">
+      <button data-lang="en" class="on">EN</button><span>/</span><button data-lang="fr">FR</button>
+    </span>
+  </nav>
+</header>
+
+<div class="ch-hud"><span id="ch-label">PROLOGUE</span><div class="bar"><i id="ch-bar"></i></div></div>
+<div class="scroll-cue" id="cue"><span>SCROLL</span><i></i></div>
+
+<div class="city-label" id="lbl-a"><div class="cn">CHENNAI</div><div class="cc">13.0827° N · 80.2707° E</div></div>
+<div class="city-label" id="lbl-b"><div class="cn">MONTPELLIER</div><div class="cc">43.6108° N · 3.8767° E</div></div>
+
+<!-- 0. HERO -->
+<div class="cover" id="cover-hero">
+  <div class="cover-ghost">01</div>
+  <div class="cover-eyebrow" data-i18n="hero-eye">Supply Chain × Data Systems — Portfolio</div>
+  <h1 class="cover-name">
+    <span class="ln"><span class="chars" data-split="Yogesh"></span></span>
+    <span class="ln"><span class="chars" data-split="Muthukumar"></span></span>
+  </h1>
+  <div class="cover-bottom">
+    <div class="cover-desc" data-i18n="hero-desc">I catch data errors before they reach a dashboard — the same discipline I once used
+      to catch defects before they reached a customer. Ex-Hyundai quality control, now building live data
+      pipelines for a French luxury textile maison.
+      <div class="open-pill" data-i18n="hero-pill">Open to work</div>
+    </div>
+    <div class="cover-meta" data-i18n="hero-meta">
+      <b>MSc Supply Chain &amp; Logistics</b><br>Montpellier Business School<br>Chambéry, France
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.chars[data-split]').forEach(function(el){
+    var text = el.getAttribute('data-split'), html = '';
+    for(var i=0;i<text.length;i++){
+      html += '<span style="animation-delay:'+(i*0.045)+'s">'+text[i]+'</span>';
+    }
+    el.innerHTML = html;
+  });
+</script>
+
+<!-- 1. MECHANICAL ENGINEERING -->
+<div class="station" data-c="0.135" data-w="0.05">
+  <div class="st-card right" style="--accent:var(--rose);">
+    <span class="st-eyebrow" style="color:var(--rose);" data-i18n="ch1-eye">Chapter 01 — The Foundation</span>
+    <h2 data-i18n="ch1-h">Mechanical<br>Engineering.</h2>
+    <p data-i18n="ch1-p">B.E. Mechanical Engineering, Panimalar Engineering College. Before data, there were
+    <b>gears, tolerances, and load calculations</b> — the discipline of a system that has to
+    work exactly as specified, every time.</p>
+    <div class="spec" data-i18n="ch1-spec">
+      <div><span>Location</span><span>Chennai, India</span></div>
+      <div><span>Period</span><span>2019 — 2023</span></div>
+      <div><span>Degree</span><span>B.E. Mechanical Eng.</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. ASHOK LEYLAND -->
+<div class="station" data-c="0.255" data-w="0.05">
+  <div class="st-card" style="--accent:var(--orange);">
+    <span class="st-eyebrow" style="color:var(--orange);" data-i18n="ch2-eye">Chapter 02 — Ashok Leyland</span>
+    <h2 data-i18n="ch2-h">The test rig<br>taught me to<br>measure everything.</h2>
+    <p data-i18n="ch2-p">Heavy commercial vehicles, scanned line by line against <b>IS &amp; EU compliance
+    frameworks</b> — performance, safety, emissions. First industry lesson: a spec isn't an opinion.</p>
+    <div class="spec" data-i18n="ch2-spec">
+      <div><span>Location</span><span>Chennai, India</span></div>
+      <div><span>Period</span><span>Feb — Mar 2023</span></div>
+      <div><span>Role</span><span>Vehicle Testing Intern</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. HYUNDAI -->
+<div class="station" data-c="0.375" data-w="0.05">
+  <div class="st-card right" style="--accent:var(--amber);">
+    <span class="st-eyebrow" style="color:var(--amber);" data-i18n="ch3-eye">Chapter 03 — Hyundai Motor India</span>
+    <h2 data-i18n="ch3-h">The last checkpoint<br>before a customer's car.</h2>
+    <p data-i18n="ch3-p">One year in <b>Pre-Delivery Inspection</b> — the final quality gate before dealership
+    release, at the exact handoff where manufacturing meets logistics.</p>
+    <div class="spec" data-i18n="ch3-spec">
+      <div><span>Location</span><span>Tamil Nadu, India</span></div>
+      <div><span>Period</span><span>Aug 2023 — Aug 2024</span></div>
+      <div><span>Role</span><span>PDI Associate</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. FLIGHT -->
+<div class="station" data-c="0.50" data-w="0.055">
+  <div class="st-card" style="--accent:var(--teal);">
+    <span class="st-eyebrow" style="color:var(--teal);">Chapter 04 — The Crossing</span>
+    <h2 data-i18n="ch4-h">15.09.2025.<br>Chennai → France.</h2>
+    <p data-i18n="ch4-p">Boarded a flight out of Chennai, Tamil Nadu, and landed in France to begin a Master's in
+    <b>Logistics &amp; Supply Chain Management at Montpellier Business School</b>. One bet:
+    the discipline travels with you.</p>
+    <div class="spec" data-i18n="ch4-spec">
+      <div><span>Departed</span><span>Chennai · 15 Sep 2025</span></div>
+      <div><span>Destination</span><span>Montpellier, France</span></div>
+      <div><span>Distance</span><span id="km">0 km</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. MBS -->
+<div class="station" data-c="0.625" data-w="0.05">
+  <div class="st-card right" style="--accent:var(--green);">
+    <span class="st-eyebrow" style="color:var(--green);" data-i18n="ch5-eye">Chapter 05 — Montpellier Business School</span>
+    <h2 data-i18n="ch5-h">Learning to see<br>the whole network.</h2>
+    <p data-i18n="ch5-p"><b>MSc Logistics, Materials &amp; Supply Chain Management.</b> Demand planning,
+    procurement, inventory optimization, network design. Dissertation: <i style="color:var(--ink)">
+    "Inventory Inaccuracy in Automotive Supply Chains."</i></p>
+    <div class="spec" data-i18n="ch5-spec">
+      <div><span>Location</span><span>Montpellier, France</span></div>
+      <div><span>Period</span><span>Sep 2025 — present</span></div>
+      <div><span>Supervisor</span><span>Rameshwar Dubey</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 6. INATA -->
+<div class="station" data-c="0.75" data-w="0.05">
+  <div class="st-card" style="--accent:var(--violet);">
+    <span class="st-eyebrow" style="color:var(--violet);" data-i18n="ch6-eye">Chapter 06 — Inata, Chambéry</span>
+    <h2 data-i18n="ch6-h">Luxury alpaca textiles,<br>woven with data.</h2>
+    <p data-i18n="ch6-p">Supply Chain / Data Automation Intern for a French luxury alpaca-fibre maison. Found the
+    dashboards <b>reporting revenue 3× off reality</b> — and rebuilt the flow from source to screen.</p>
+    <div class="spec" data-i18n="ch6-spec">
+      <div><span>Location</span><span>Chambéry, France</span></div>
+      <div><span>Period</span><span>Jul 2026 — present</span></div>
+      <div><span>Found</span><span>3× drift · 19 hidden overdue</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 7. TRANSITION TO WORK -->
+<div class="station" data-c="0.865" data-w="0.045">
+  <div class="st-card right" style="--accent:var(--navy);">
+    <span class="st-eyebrow" style="color:var(--navy);" data-i18n="ch7-eye">Chapter 07 — The Evidence</span>
+    <h2 data-i18n="ch7-h">Six chapters.<br>Five proofs.</h2>
+    <p data-i18n="ch7-p">Keep scrolling — the actual work, code, and dashboards are just below.</p>
+  </div>
+</div>
+
+<div id="track"></div>
+
+<main>
+<div class="flatzone">
+
+  <section class="flat" id="work">
+    <div class="wrap">
+      <span class="eyebrow fade" data-i18n="work-eye">Evidence, not claims</span>
+      <h2 class="mega fade" data-i18n="work-h">Selected<br><span>Work</span></h2>
+      <div class="acc">
+        <div class="acc-item">
+          <button class="acc-btn"><span class="acc-n">01</span><span class="acc-q" data-i18n="w1-q">Airtable → Power BI Live Connector</span><span class="acc-plus">+</span></button>
+          <div class="acc-body"><div class="acc-in">
+            <p data-i18n="w1-a">Power BI was reading <b>static Excel exports</b> off SharePoint — every figure a stale snapshot. I traced the
+            mismatch to its source and built the replacement: paginated Airtable API extraction, Make orchestration,
+            Python validation, straight into Power BI.</p>
+            <div class="metrics">
+              <div><b style="color:var(--teal)">3×</b><span>revenue drift caught</span></div>
+              <div><b style="color:var(--teal)">19</b><span>hidden overdue orders</span></div>
+              <div><b style="color:var(--teal)">15+</b><span>linked tables automated</span></div>
+            </div>
+            <div class="chips"><em>Airtable API</em><em>Python</em><em>Make</em><em>Power BI</em><em>Pagination</em></div>
+            <div class="lnks"><a href="airtable_powerbi_connector_demo.py" target="_blank">Read the code →</a></div>
+          </div></div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-btn"><span class="acc-n">02</span><span class="acc-q" data-i18n="w2-q">Control Tower Executive Dashboard</span><span class="acc-plus">+</span></button>
+          <div class="acc-body"><div class="acc-in">
+            <p data-i18n="w2-a">Board-level supply chain visibility in a dark <b>Microsoft Fabric</b> language — KPI cards, region revenue,
+            pipeline health, live-sync state — fed by the connector rather than a manual export.</p>
+            <div class="metrics">
+              <div><b style="color:var(--amber)">99.4%</b><span>pipeline uptime</span></div>
+              <div><b style="color:var(--amber)">15 min</b><span>auto-refresh</span></div>
+            </div>
+            <div class="chips"><em>Power BI</em><em>DAX</em><em>Power Query M</em><em>Fabric theming</em></div>
+            <div class="lnks"><a href="dashboard-demo.html" target="_blank">Open the live demo →</a></div>
+          </div></div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-btn"><span class="acc-n">03</span><span class="acc-q" data-i18n="w3-q">Cross-Platform Pipeline &amp; Airtable Redesign</span><span class="acc-plus">+</span></button>
+          <div class="acc-body"><div class="acc-in">
+            <p data-i18n="w3-a"><b>Google Sheets → Airtable → Power BI.</b> Spreadsheet silos merged into one automated flow; Airtable
+            interface views rebuilt for daily operations; native automations removing repetitive entry.</p>
+            <div class="chips"><em>Google Sheets API</em><em>Airtable Interfaces</em><em>Automations</em><em>Workflow design</em></div>
+          </div></div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-btn"><span class="acc-n">04</span><span class="acc-q" data-i18n="w4-q">INATA Digital — WordPress &amp; Next.js Spec</span><span class="acc-plus">+</span></button>
+          <div class="acc-body"><div class="acc-in">
+            <p data-i18n="w4-a">Live company site maintained on <b>WordPress</b>; forward-looking rebuild spec authored — <b>Next.js 14,
+            React Three Fiber, GSAP</b>, bilingual FR/EN with a B2B quotation wizard.</p>
+            <div class="chips"><em>WordPress</em><em>Next.js</em><em>React Three Fiber</em><em>GSAP</em></div>
+          </div></div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-btn"><span class="acc-n">05</span><span class="acc-q" data-i18n="w5-q">MSc Dissertation — Inventory Inaccuracy</span><span class="acc-plus">+</span></button>
+          <div class="acc-body"><div class="acc-in">
+            <p data-i18n="w5-a"><i style="color:var(--ink)">"Inventory Inaccuracy in Automotive Supply Chains: An Operational and
+            Data-Driven Perspective."</i> The academic mirror of the exact gap caught at Inata: recorded data vs
+            physical reality.</p>
+            <div class="chips"><em>Research</em><em>Automotive SCM</em><em>MBS 2025–26</em></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="flat" id="faq">
+    <div class="wrap">
+      <span class="eyebrow fade" data-i18n="faq-eye">For recruiters</span>
+      <h2 class="mega fade" data-i18n="faq-h">Frequently<br><span>Asked</span></h2>
+      <div class="acc">
+        <div class="acc-item"><button class="acc-btn"><span class="acc-n">Q1</span><span class="acc-q" data-i18n="q1-q">Authorized to work in France / the EU?</span><span class="acc-plus">+</span></button>
+          <div class="acc-body"><div class="acc-in"><p data-i18n="q1-a">Yes — French Student Visa (VLS-TS), based in Chambéry. Open to roles across Europe and to relocation.</p></div></div></div>
+        <div class="acc-item"><button class="acc-btn"><span class="acc-n">Q2</span><span class="acc-q" data-i18n="q2-q">What roles are you looking for?</span><span class="acc-plus">+</span></button>
+          <div class="acc-body"><div class="acc-in"><p data-i18n="q2-a">Supply chain &amp; logistics (demand planning, procurement, inventory optimization) and data/BI — the overlap is the sweet spot.</p></div></div></div>
+        <div class="acc-item"><button class="acc-btn"><span class="acc-n">Q3</span><span class="acc-q" data-i18n="q3-q">What languages do you speak?</span><span class="acc-plus">+</span></button>
+          <div class="acc-body"><div class="acc-in"><p data-i18n="q3-a">English (full professional), French (limited working), Tamil (native), Telugu &amp; Malayalam (professional).</p></div></div></div>
+        <div class="acc-item"><button class="acc-btn"><span class="acc-n">Q4</span><span class="acc-q" data-i18n="q4-q">Can I see real work, not just claims?</span><span class="acc-plus">+</span></button>
+          <div class="acc-body"><div class="acc-in"><p data-i18n="q4-a">Yes — live dashboard demo and runnable connector script above. Sample data; real method.</p>
+          <div class="lnks"><a href="dashboard-demo.html" target="_blank">Dashboard demo →</a><a href="airtable_powerbi_connector_demo.py" target="_blank">Connector code →</a></div></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="flat" id="contact" style="padding-bottom:9vh;">
+    <div class="wrap">
+      <span class="eyebrow fade" data-i18n="contact-eye">Final approach</span>
+      <h2 class="mega fade" data-i18n="contact-h">Let's<br><span>Talk</span></h2>
+      <div class="contact-grid">
+        <div class="fade">
+          <div id="form-zone">
+            <div class="field"><label data-i18n="f-lbl-name">Name</label><input id="f-name" type="text"></div>
+            <div class="field"><label data-i18n="f-lbl-email">Email</label><input id="f-email" type="email"></div>
+            <div class="field"><label data-i18n="f-lbl-msg">Message</label><textarea id="f-msg" rows="4"></textarea></div>
+            <div class="err" id="f-err"></div>
+            <button class="send" id="f-send" data-i18n="f-send">Send message</button>
+          </div>
+          <div id="sent-zone" style="display:none;">
+            <div class="sent" data-i18n="f-sent">MESSAGE PREPARED — your mail client just opened, pre-filled.<br>If it didn't: yogeshmuthukumar29@gmail.com</div>
+            <button class="send" style="margin-top:18px;" id="f-again" data-i18n="f-again">Send another</button>
+          </div>
+        </div>
+        <div class="sidelinks fade">
+          <a href="https://www.linkedin.com/in/yogesh-muthukumar-38501221b" target="_blank" rel="noreferrer">LinkedIn <span>↗</span></a>
+          <a href="mailto:yogeshmuthukumar29@gmail.com" style="text-transform:none; font-size:clamp(13px,1.5vw,17px); letter-spacing:0;"><span data-i18n="side-email">yogeshmuthukumar29@gmail.com</span> <span>↗</span></a>
+          <button id="dl-cv"><span data-i18n="side-cv">Download CV</span> <span>↓</span></button>
+          <a href="https://github.com/yogeshreigns08-crypto/supply-chain-portfolio" target="_blank" rel="noreferrer">GitHub <span>↗</span></a>
+          <a href="https://www.instagram.com/yogeshreigns28/" target="_blank" rel="noreferrer">Instagram <span>↗</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div>© 2026 Yogesh Muthukumar</div>
+    <div>Chambéry, France · Open across Europe</div>
+  </footer>
+</div>
+</main>
+
+<script>
+(function(){
+  var canvas=document.getElementById('stage'), renderer;
+  try{ renderer=new THREE.WebGLRenderer({canvas:canvas, antialias:true}); }catch(e){ return; }
+  renderer.setPixelRatio(Math.min(devicePixelRatio,1.35));
+  var scene=new THREE.Scene();
+  var camera=new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 1200);
+  function resize(){ renderer.setSize(innerWidth,innerHeight); camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); }
+  resize(); addEventListener('resize',resize);
+
+  scene.fog=new THREE.Fog(0x0A0E16, 50, 340);
+  scene.add(new THREE.AmbientLight(0x3A4360, 1.15));
+  var key=new THREE.DirectionalLight(0xEFF3FC, 1.45); key.position.set(-30,60,20); scene.add(key);
+  var rim=new THREE.DirectionalLight(0x2AD9CE, 0.45); rim.position.set(30,-8,-30); scene.add(rim);
+  var fillWarm=new THREE.DirectionalLight(0xFFC53D, 0.22); fillWarm.position.set(20,20,40); scene.add(fillWarm);
+
+  var line=function(c,o){ return new THREE.LineBasicMaterial({color:c, transparent:true, opacity:o}); };
+  var metal=function(c,m,r){ return new THREE.MeshStandardMaterial({color:c, metalness:m, roughness:r}); };
+
+  // ---------- Z anchors ----------
+  var Z_HERO=40, Z_MECH=-90, Z_AL=-230, Z_HY=-370, Z_FL=-540, Z_MBS=-700, Z_IN=-860, Z_END=-990;
+
+  // ===== ZONE 1: MECHANICAL ENGINEERING — gears + blueprints + drafting table =====
+  var mechG=new THREE.Group(); mechG.position.set(0,-3,Z_MECH); scene.add(mechG);
+  var gearMat=metal(0x1A2030,0.85,0.28);
+  function makeGear(r,teeth,thick){
+    var g=new THREE.Group();
+    g.add(new THREE.Mesh(new THREE.TorusGeometry(r,r*0.2,10,32), gearMat));
+    for(var i=0;i<teeth;i++){
+      var tth=new THREE.Mesh(new THREE.BoxGeometry(r*0.24,r*0.24,thick), gearMat);
+      var a=(i/teeth)*Math.PI*2;
+      tth.position.set(Math.cos(a)*(r+r*0.18), Math.sin(a)*(r+r*0.18), 0);
+      tth.rotation.z=a; g.add(tth);
+    }
+    var rim2=new THREE.Mesh(new THREE.TorusGeometry(r*0.35,0.1,8,26), new THREE.MeshBasicMaterial({color:0xFF3D7F, transparent:true, opacity:0.7}));
+    g.add(rim2);
+    return g;
+  }
+  var g1=makeGear(6.2,14,1.4); g1.position.set(-10,6,0); mechG.add(g1);
+  var g2=makeGear(4.0,10,1.2); g2.position.set(0.6,2.2,1.5); mechG.add(g2);
+  var g3=makeGear(5.0,12,1.3); g3.position.set(9.5,7,-1); mechG.add(g3);
+  // blueprint planes
+  var bps=[];
+  for(var i=0;i<3;i++){
+    var bp=new THREE.Group();
+    var sheet=new THREE.Mesh(new THREE.PlaneGeometry(11,7.4), new THREE.MeshBasicMaterial({color:0x18406E, transparent:true, opacity:0.4}));
+    bp.add(sheet);
+    var grid=new THREE.LineSegments(new THREE.WireframeGeometry(new THREE.PlaneGeometry(11,7.4,7,5)), line(0x7FB2FF,0.6));
+    bp.add(grid);
+    bp.position.set(-22+i*10, 15+(i%2)*3, -8-i*5); bp.rotation.y=0.35-i*0.25;
+    mechG.add(bp); bps.push(bp);
+  }
+  // drafting instruments (wireframe compass + ruler)
+  var compass=new THREE.Group();
+  var arm1=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,6,6), metal(0xC9D2DE,0.9,0.2)); arm1.rotation.z=0.4; arm1.position.x=1.2; compass.add(arm1);
+  var arm2=arm1.clone(); arm2.rotation.z=-0.4; arm2.position.x=-1.2; compass.add(arm2);
+  compass.position.set(18,-1,6); mechG.add(compass);
+
+  // ===== ZONE 2: ASHOK LEYLAND — truck on scan rig =====
+  var truck=new THREE.Group();
+  (function(){
+    var w=function(a,b,c,x,y,z){ var m=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(a,b,c)), line(0xFFC989,0.9)); m.position.set(x,y,z); truck.add(m); };
+    w(5,5.4,5.2,7.2,5.7,0); w(12,6,5.4,-2.6,6,0); w(16.5,1.2,4.6,1.4,2.4,0);
+    [[8,2.3],[8,-2.3],[-1,2.3],[-1,-2.3],[-6,2.3],[-6,-2.3]].forEach(function(pr){
+      var c=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(1.35,1.35,0.8,14)), line(0xFF7A2F,0.85));
+      c.rotation.x=Math.PI/2; c.position.set(pr[0],1.4,pr[1]); truck.add(c);
+    });
+    var plinth=new THREE.Mesh(new THREE.CylinderGeometry(15,16,1.2,10), metal(0x151D30,0.8,0.35));
+    plinth.position.y=-0.4; truck.add(plinth);
+    truck.position.set(0,-6,Z_AL); truck.rotation.y=0.4; scene.add(truck);
+  })();
+  var scan=new THREE.Mesh(new THREE.PlaneGeometry(6.5,24), new THREE.MeshBasicMaterial({color:0xFF7A2F, transparent:true, opacity:0.14, side:THREE.DoubleSide, depthWrite:false}));
+  scan.rotation.y=Math.PI/2; scan.position.set(0,4,Z_AL); scene.add(scan);
+  var alRing=new THREE.Mesh(new THREE.TorusGeometry(15.4,0.12,8,72), new THREE.MeshBasicMaterial({color:0xFF7A2F, transparent:true, opacity:0.75}));
+  alRing.rotation.x=Math.PI/2; alRing.position.set(0,-4.6,Z_AL); scene.add(alRing);
+
+  // ===== ZONE 3: HYUNDAI — manufacturing line =====
+  var hyG=new THREE.Group(); hyG.position.set(0,-4,Z_HY); scene.add(hyG);
+  var hyTrack=new THREE.Mesh(new THREE.BoxGeometry(70,1.2,9), metal(0x141A28,0.85,0.3)); hyTrack.position.y=-4; hyG.add(hyTrack);
+  var hyGlow=new THREE.Mesh(new THREE.TorusGeometry(0,0,0,0), line(0,0)); // placeholder unused
+  for(var li=0; li<7; li++){
+    var lamp=new THREE.Mesh(new THREE.BoxGeometry(0.4,6,0.4), metal(0x1A2030,0.7,0.4));
+    lamp.position.set(-30+li*10, -0.5, -6); hyG.add(lamp);
+    var bulb=new THREE.Mesh(new THREE.SphereGeometry(0.45,8,8), new THREE.MeshBasicMaterial({color:0xFFC53D}));
+    bulb.position.set(-30+li*10, 2.7, -6); hyG.add(bulb);
+  }
+  var hyCars=[];
+  function hyCar(col){
+    var c=new THREE.Group();
+    var body=new THREE.Mesh(new THREE.BoxGeometry(7,1.6,3.2), metal(col,0.9,0.18)); body.position.y=0.4; c.add(body);
+    var cab=new THREE.Mesh(new THREE.BoxGeometry(3.6,1.4,2.8), metal(0x10141C,0.9,0.12)); cab.position.set(-0.2,1.7,0); c.add(cab);
+    [[2.2,1.7],[2.2,-1.7],[-2.2,1.7],[-2.2,-1.7]].forEach(function(pr){
+      var wl=new THREE.Mesh(new THREE.CylinderGeometry(0.8,0.8,0.55,14), metal(0x0A0D14,0.6,0.4));
+      wl.rotation.x=Math.PI/2; wl.position.set(pr[0],-0.5,pr[1]); c.add(wl);
+    });
+    return c;
+  }
+  var carColors=[0xFFC53D,0xD9DFE8,0xFF7A2F];
+  for(var ci=0;ci<3;ci++){ var cc=hyCar(carColors[ci]); cc.position.set(-32+ci*24,-2.2,0); hyG.add(cc); hyCars.push(cc); }
+  var arms=[];
+  [-1,1].forEach(function(s){
+    var arm=new THREE.Group();
+    var seg=function(len){ return new THREE.LineSegments(new THREE.WireframeGeometry(new THREE.BoxGeometry(0.85,len,0.85)), line(0xFFC53D,0.85)); };
+    var base=seg(3); base.position.y=1.5; arm.add(base);
+    var j1=new THREE.Group(); j1.position.y=3; base.add(j1);
+    var a1=seg(4.6); a1.position.y=2.3; j1.add(a1);
+    arm.position.set(9*s,-3.2,4.2*s);
+    hyG.add(arm); arms.push(j1);
+  });
+
+  // ===== ZONE 4: FLIGHT — globe + exact arc + date =====
+  var earthG=new THREE.Group(); earthG.position.set(0,26,Z_FL); scene.add(earthG);
+  var R=15;
+  earthG.add(new THREE.LineSegments(new THREE.WireframeGeometry(new THREE.SphereGeometry(R,26,18)), line(0x2E3A52,0.55)));
+  earthG.add(new THREE.Mesh(new THREE.SphereGeometry(R*0.99,26,18), metal(0x0C1428,0.2,0.9)));
+  earthG.add(new THREE.Mesh(new THREE.SphereGeometry(R*1.08,26,18), new THREE.MeshBasicMaterial({color:0x2AD9CE, transparent:true, opacity:0.05, side:THREE.BackSide})));
+  var ll=function(lat,lon){ var phi=(90-lat)*Math.PI/180, th=(lon+180)*Math.PI/180;
+    return new THREE.Vector3(-R*Math.sin(phi)*Math.cos(th), R*Math.cos(phi), R*Math.sin(phi)*Math.sin(th)); };
+  var CHN=ll(13.0827,80.2707), MTP=ll(43.6108,3.8767);
+  var na=CHN.clone().normalize(), nb=MTP.clone().normalize();
+  var angAB=Math.acos(THREE.MathUtils.clamp(na.dot(nb),-1,1));
+  var arcPts=[];
+  for(var ai=0;ai<=70;ai++){ var tt=ai/70, sT=Math.sin(angAB);
+    var p=na.clone().multiplyScalar(Math.sin((1-tt)*angAB)/sT).add(nb.clone().multiplyScalar(Math.sin(tt*angAB)/sT));
+    arcPts.push(p.multiplyScalar(R*(1+0.16*Math.sin(Math.PI*tt)))); }
+  var arc=new THREE.CatmullRomCurve3(arcPts);
+  earthG.add(new THREE.Mesh(new THREE.TubeGeometry(arc,90,0.09,6,false), new THREE.MeshBasicMaterial({color:0x2AD9CE})));
+  earthG.add(new THREE.Mesh(new THREE.TubeGeometry(arc,90,0.3,6,false), new THREE.MeshBasicMaterial({color:0x2AD9CE, transparent:true, opacity:0.13})));
+  function mkPin(p,c){ var g=new THREE.Group();
+    g.add(new THREE.Mesh(new THREE.SphereGeometry(0.32,10,10), new THREE.MeshBasicMaterial({color:c})));
+    var h=new THREE.Mesh(new THREE.RingGeometry(0.48,0.6,26), new THREE.MeshBasicMaterial({color:c, transparent:true, opacity:0.75, side:THREE.DoubleSide}));
+    h.lookAt(p); g.add(h); g.position.copy(p).multiplyScalar(1.005); g.userData.h=h; earthG.add(g); return g; }
+  var pinA=mkPin(CHN,0xFF7A2F), pinB=mkPin(MTP,0x2AD9CE);
+  var jet=new THREE.Group();
+  (function(){ var jm=metal(0xE8EDF4,0.9,0.2);
+    var f=new THREE.Mesh(new THREE.ConeGeometry(0.2,2,10),jm); f.rotation.z=-Math.PI/2; jet.add(f);
+    var wj=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.03,1.9),jm); wj.position.x=-0.2; jet.add(wj); })();
+  earthG.add(jet);
+  var trailN=34, trailPos=new Float32Array(trailN*3);
+  var trailGeo=new THREE.BufferGeometry(); trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos,3));
+  earthG.add(new THREE.Line(trailGeo, line(0x9FF2E5,0.55)));
+
+  // ===== ZONE 5: MBS — logistics: containers, crane, network route =====
+  var mbG=new THREE.Group(); mbG.position.set(0,-6,Z_MBS); scene.add(mbG);
+  var palette=[0x2AD9CE,0x3C6BFF,0x9B6BFF,0xFFC53D];
+  var containerGeo=new THREE.BoxGeometry(6.2,2.6,2.6);
+  function contStack(x,z,cols,rows){
+    for(var c=0;c<cols;c++) for(var r=0;r<rows;r++){
+      var b=new THREE.Mesh(containerGeo, metal(palette[(c+r)%palette.length],0.55,0.45));
+      b.position.set(x+c*6.6, 2.4+r*2.9, z); mbG.add(b);
+    }
+  }
+  contStack(-26,-4,3,2); contStack(14,4,2,2); contStack(40,-6,2,2);
+  // crane silhouette (wireframe, professional not cartoon)
+  var crane=new THREE.Group();
+  var craneMat=line(0x9AA6BC,0.85);
+  [[-7,-5],[7,-5],[-7,5],[7,5]].forEach(function(pr){
+    var leg=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1,22,1)), craneMat);
+    leg.position.set(pr[0],11,pr[1]); crane.add(leg);
+  });
+  var beam=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(40,1.6,2.6)), craneMat);
+  beam.position.set(-4,23,0); crane.add(beam);
+  var hookCable=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,8,6), new THREE.MeshBasicMaterial({color:0x2AD9CE}));
+  hookCable.position.set(-14,19,0); crane.add(hookCable);
+  var hookBox=new THREE.Mesh(containerGeo, metal(0x2AD9CE,0.6,0.35)); hookBox.scale.set(0.55,0.55,0.55); hookBox.position.set(-14,14,0); crane.add(hookBox);
+  crane.position.set(-2,-4,0); mbG.add(crane);
+  // network route: glowing curve with a travelling node marker (professional, not literal trucks)
+  var routePts=[];
+  for(var ri=0; ri<=40; ri++) routePts.push(new THREE.Vector3(-40+ri*2, 3.4+Math.sin(ri*0.3)*1.4, 10+Math.sin(ri*0.18)*8));
+  var routeCurve=new THREE.CatmullRomCurve3(routePts);
+  mbG.add(new THREE.Mesh(new THREE.TubeGeometry(routeCurve,80,0.1,6,false), new THREE.MeshBasicMaterial({color:0x3C6BFF, transparent:true, opacity:0.75})));
+  var routeNodes=[];
+  for(var rn=0; rn<4; rn++){
+    var nd=new THREE.Mesh(new THREE.OctahedronGeometry(0.7), new THREE.MeshBasicMaterial({color:0xFFC53D}));
+    nd.userData.t=rn/4; mbG.add(nd); routeNodes.push(nd);
+  }
+
+  // ===== ZONE 6: INATA — alpaca (faceted, elegant) + cloth fibre weave + peaks =====
+  var inG=new THREE.Group(); inG.position.set(0,-4,Z_IN); scene.add(inG);
+  // snow peaks silhouette
+  for(var pi=0;pi<6;pi++){
+    var s=(pi%2? 1:-1), h=22+Math.random()*14;
+    var mt=new THREE.Mesh(new THREE.ConeGeometry(11+Math.random()*6,h,5), metal(0x1C2338,0,0.95));
+    mt.position.set(s*(30+Math.random()*26), h/2-9, -18-Math.random()*20); inG.add(mt);
+    var cap=new THREE.Mesh(new THREE.ConeGeometry((11+Math.random()*3)*0.4,h*0.3,5), new THREE.MeshStandardMaterial({color:0xEDF2FA, flatShading:true, roughness:0.9}));
+    cap.position.set(mt.position.x, mt.position.y+h*0.36, mt.position.z); inG.add(cap);
+  }
+  // elegant abstract fibre spool — concentric wound-thread rings, no literal creature
+  var spool=new THREE.Group();
+  var spindle=new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.16,9.5,12), metal(0xD3DAE6,0.92,0.14));
+  spindle.rotation.z=Math.PI/2; spool.add(spindle);
+  var capL=new THREE.Mesh(new THREE.CircleGeometry(0.5,20), metal(0xD3DAE6,0.92,0.14)); capL.position.x=-4.8; capL.rotation.y=Math.PI/2; spool.add(capL);
+  var capR=capL.clone(); capR.position.x=4.8; spool.add(capR);
+  var spoolPalette=[0x9B6BFF,0xB98CFF,0xFFC53D,0x2AD9CE];
+  var spoolRings=[];
+  for(var sr=0; sr<9; sr++){
+    var rad=1.15+sr*0.36;
+    var ringMat=new THREE.MeshStandardMaterial({color:spoolPalette[sr%spoolPalette.length], metalness:0.35, roughness:0.42});
+    var ring=new THREE.Mesh(new THREE.TorusGeometry(rad,0.085,8,54), ringMat);
+    ring.rotation.y=Math.PI/2;
+    spool.add(ring); spoolRings.push(ring);
+  }
+  // a few loose thread wisps drifting off the spool
+  var wisps=[];
+  for(var wi=0; wi<5; wi++){
+    var pts=[];
+    var base=new THREE.Vector3((Math.random()-0.5)*3.6, (Math.random()-0.5)*3.6*0+1.4, 0);
+    for(var wp=0; wp<5; wp++) pts.push(new THREE.Vector3(base.x+Math.random()*2-1, base.y+wp*1.1, base.z+Math.random()*2-1));
+    var wc=new THREE.CatmullRomCurve3(pts);
+    var wire=new THREE.Mesh(new THREE.TubeGeometry(wc,20,0.045,5,false), new THREE.MeshBasicMaterial({color:0xFFC53D, transparent:true, opacity:0.75}));
+    spool.add(wire); wisps.push(wire);
+  }
+  spool.position.set(-6,4,4); spool.rotation.z=0.18;
+  inG.add(spool);
+  // cloth / fibre ribbon
+  var silkGeo=new THREE.PlaneGeometry(60,13,44,7);
+  var silk=new THREE.Mesh(silkGeo, new THREE.MeshStandardMaterial({color:0x9B6BFF, metalness:0.6, roughness:0.32, side:THREE.DoubleSide}));
+  silk.rotation.x=-0.32; silk.position.set(14,3,-4); inG.add(silk);
+  var silkBase=silkGeo.attributes.position.array.slice();
+  var threadN=70, threadPos=new Float32Array(threadN*3), threadSeed=new Float32Array(threadN);
+  for(var thi=0; thi<threadN; thi++){ threadSeed[thi]=Math.random()*6.28;
+    threadPos[thi*3]=(Math.random()-0.5)*54+14; threadPos[thi*3+1]=Math.random()*14-2; threadPos[thi*3+2]=(Math.random()-0.5)*16-4; }
+  var threadGeo=new THREE.BufferGeometry(); threadGeo.setAttribute('position', new THREE.BufferAttribute(threadPos,3));
+  inG.add(new THREE.Points(threadGeo, new THREE.PointsMaterial({color:0xFFC53D, size:0.26, transparent:true, opacity:0.85})));
+
+  // ===== creature accents (restrained, professional) =====
+  var mantas=[];
+  function mkManta(cx,cy,cz,rad,spd,hue){
+    var g=new THREE.Group();
+    var wm=new THREE.MeshBasicMaterial({color:hue, transparent:true, opacity:0.35, side:THREE.DoubleSide, blending:THREE.AdditiveBlending, depthWrite:false});
+    var w1=new THREE.Mesh(new THREE.PlaneGeometry(3.6,1.1), wm); w1.position.x=-1.7; g.add(w1);
+    var w2=new THREE.Mesh(new THREE.PlaneGeometry(3.6,1.1), wm); w2.position.x=1.7; g.add(w2);
+    g.userData={cx:cx,cy:cy,cz:cz,rad:rad,spd:spd,ph:Math.random()*6.28,w1:w1,w2:w2};
+    scene.add(g); mantas.push(g);
+  }
+  mkManta(0,20,Z_MECH-40,34,0.09,0xFF3D7F);
+  mkManta(0,16,Z_FL-30,40,0.08,0x2AD9CE);
+  mkManta(0,14,Z_IN-20,36,0.07,0x9B6BFF);
+
+  // ---------- ONE CONTINUOUS CAMERA SPLINE ----------
+  var camPath=new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0,4,90),
+    new THREE.Vector3(2,4,30),
+    new THREE.Vector3(-6,5,Z_MECH+50),
+    new THREE.Vector3(6,7,Z_MECH-10),
+    new THREE.Vector3(-4,8,Z_AL+70),
+    new THREE.Vector3(8,9,Z_AL-6),
+    new THREE.Vector3(-6,9,Z_HY+70),
+    new THREE.Vector3(10,9,Z_HY-10),
+    new THREE.Vector3(0,16,Z_HY-70),
+    new THREE.Vector3(0,26,Z_FL+40),
+    new THREE.Vector3(8,26,Z_FL),
+    new THREE.Vector3(-6,20,Z_FL-70),
+    new THREE.Vector3(0,4,Z_MBS+80),
+    new THREE.Vector3(-6,5,Z_MBS+10),
+    new THREE.Vector3(6,6,Z_MBS-70),
+    new THREE.Vector3(-4,4,Z_IN+70),
+    new THREE.Vector3(4,5,Z_IN),
+    new THREE.Vector3(0,4,Z_END),
+  ], false, 'catmullrom', 0.3);
+  camPath.arcLengthDivisions=500;
+
+  var STOPS=[
+    [0.00, 0x0B0E1C,0x171B30,0x0F1220],
+    [0.14, 0x150C1E,0x2A1A3A,0x1E1430],
+    [0.27, 0x1A1006,0x3A2410,0x2A1A0C],
+    [0.40, 0x1A1706,0x30280E,0x241E0C],
+    [0.53, 0x060B18,0x0E1E30,0x0C1826],
+    [0.68, 0x08120E,0x122A22,0x0F221C],
+    [0.82, 0x120A1E,0x241236,0x1A0F2A],
+    [1.00, 0x0A0D16,0x14182A,0x0F1220]
+  ].map(function(s){ return [s[0], new THREE.Color(s[1]), new THREE.Color(s[2]), new THREE.Color(s[3])]; });
+  var cTop=new THREE.Color(), cBot=new THREE.Color(), cFog=new THREE.Color();
+  function paletteAt(p){
+    var i=0; while(i<STOPS.length-2 && p>STOPS[i+1][0]) i++;
+    var A=STOPS[i], B=STOPS[i+1];
+    var k=THREE.MathUtils.clamp((p-A[0])/(B[0]-A[0]),0,1);
+    cTop.copy(A[1]).lerp(B[1],k); cBot.copy(A[2]).lerp(B[2],k); cFog.copy(A[3]).lerp(B[3],k);
+  }
+  // simple sky via fog + bg color (no shader needed, keeps this lighter than the aurora build)
+  scene.background=new THREE.Color(0x0B0E1C);
+
+  var coverHero=document.getElementById('cover-hero');
+  var stations=[].slice.call(document.querySelectorAll('.station')).map(function(el){
+    return { el:el, c:parseFloat(el.dataset.c), w:parseFloat(el.dataset.w), on:false };
+  });
+  var CH_NAMES=['PROLOGUE','CH 01 · MECHANICAL','CH 02 · ASHOK LEYLAND','CH 03 · HYUNDAI','CH 04 · THE CROSSING','CH 05 · MONTPELLIER BS','CH 06 · INATA','CH 07 · THE WORK'];
+  var chLabel=document.getElementById('ch-label'), chBar=document.getElementById('ch-bar');
+  var cue=document.getElementById('cue');
+  var lblA=document.getElementById('lbl-a'), lblB=document.getElementById('lbl-b');
+  var kmEl=document.getElementById('km'); var kmShown=0; var KM=7850;
+  var track=document.getElementById('track');
+
+  var scT=0, scS=0, lastCh=-1, lastBar=-1;
+  function trackMax(){ return track.offsetTop + track.offsetHeight - innerHeight; }
+  addEventListener('scroll', function(){ scT=scrollY; }, {passive:true}); scT=scrollY;
+
+  var P=new THREE.Vector3(), L=new THREE.Vector3(), Pv=new THREE.Vector3();
+  var CH_W=CHN.clone().multiplyScalar(1.14), MP_W=MTP.clone().multiplyScalar(1.14);
+  function projectLabel(el,local,vis){
+    if(!vis){ if(el.style.opacity!=='0') el.style.opacity=0; return; }
+    Pv.copy(local); earthG.localToWorld(Pv); Pv.project(camera);
+    if(Pv.z>1){ el.style.opacity=0; return; }
+    el.style.opacity=1;
+    el.style.left=((Pv.x*0.5+0.5)*innerWidth)+'px';
+    el.style.top=((-Pv.y*0.5+0.5)*innerHeight)+'px';
+  }
+  var _jp=new THREE.Vector3(), _jp2=new THREE.Vector3();
+
+  function animate(){
+    requestAnimationFrame(animate);
+    var t=performance.now()*0.001;
+    scS += (scT-scS)*0.065;
+    var max=trackMax();
+    var p=THREE.MathUtils.clamp(scS/Math.max(1,max),0,1);
+    var beyond = scS>max;
+
+    paletteAt(p);
+    scene.fog.color.copy(cFog);
+    scene.background.copy(cTop).lerp(cBot,0.5);
+
+    // zone life
+    g1.rotation.z=t*0.35; g2.rotation.z=-t*0.5; g3.rotation.z=t*0.42;
+    bps.forEach(function(bp,i){ bp.position.y=15+(i%2)*3+Math.sin(t*0.7+i)*0.7; });
+    scan.position.x=Math.sin(t*0.5)*7;
+    truck.rotation.y=0.4+Math.sin(t*0.12)*0.05;
+    arms.forEach(function(j,i){ j.rotation.z=Math.sin(t*1.3+i)*0.55; });
+    hyCars.forEach(function(c,i){ c.position.x=((t*4+i*24+32)%64)-32; });
+
+    earthG.rotation.y=t*0.035;
+    var jt=(t*0.05)%1;
+    arc.getPointAt(jt,_jp); arc.getPointAt(Math.min(1,jt+0.02),_jp2);
+    jet.position.copy(_jp); jet.lookAt(Pv.copy(_jp2).add(earthG.position)); jet.rotateY(-Math.PI/2);
+    for(var i=trailN-1;i>0;i--){ trailPos[i*3]=trailPos[(i-1)*3]; trailPos[i*3+1]=trailPos[(i-1)*3+1]; trailPos[i*3+2]=trailPos[(i-1)*3+2]; }
+    trailPos[0]=_jp.x; trailPos[1]=_jp.y; trailPos[2]=_jp.z;
+    trailGeo.attributes.position.needsUpdate=true;
+    pinA.userData.h.scale.setScalar(1+Math.sin(t*2.4)*0.25);
+    pinB.userData.h.scale.setScalar(1+Math.sin(t*2.4+1.2)*0.25);
+
+    crane.rotation.y=Math.sin(t*0.15)*0.03;
+    hookCable.position.y=19+Math.sin(t*0.6)*2; hookBox.position.y=hookCable.position.y-5;
+    routeNodes.forEach(function(nd){ nd.userData.t=(nd.userData.t+0.0016)%1; var pt=routeCurve.getPointAt(nd.userData.t); nd.position.copy(pt); nd.rotation.y=t*1.5; });
+
+    spool.rotation.x=t*0.5;
+    spool.position.y=4+Math.sin(t*0.7)*0.2;
+    spoolRings.forEach(function(r,ri){ r.rotation.x=t*(0.3+ri*0.02); });
+    wisps.forEach(function(w,wi2){ w.position.y=Math.sin(t*0.9+wi2)*0.3; });
+    var fp=silkGeo.attributes.position;
+    for(var si=0; si<fp.count; si++){ var sx=silkBase[si*3], sy=silkBase[si*3+1];
+      fp.setZ(si, Math.sin(sx*0.12+t*1.4)*1.3+Math.sin(sy*0.3+t*0.9)*0.7); }
+    fp.needsUpdate=true; silkGeo.computeVertexNormals();
+    var tp=threadGeo.attributes.position;
+    for(var ti=0; ti<threadN; ti++){ tp.setY(ti, ((threadPos[ti*3+1]+t*1.0+threadSeed[ti])%14)-2); }
+    tp.needsUpdate=true;
+
+    mantas.forEach(function(m){
+      var u=t*m.userData.spd+m.userData.ph;
+      m.position.set(m.userData.cx+Math.cos(u)*m.userData.rad, m.userData.cy+Math.sin(u*1.3)*3, m.userData.cz+Math.sin(u)*m.userData.rad*0.5);
+      m.rotation.y=-u+Math.PI/2;
+      var fl=Math.sin(t*4.4+m.userData.ph)*0.5;
+      m.userData.w1.rotation.y=fl; m.userData.w2.rotation.y=-fl;
+    });
+
+    if(!beyond){
+      var pt2=THREE.MathUtils.clamp(p,0,0.999);
+      camPath.getPointAt(pt2,P);
+      camPath.getPointAt(Math.min(0.999,pt2+0.012),L);
+      camera.position.copy(P);
+      camera.position.x+=Math.sin(t*0.45)*0.45;
+      camera.position.y+=Math.sin(t*0.65)*0.28;
+      camera.lookAt(L.x, L.y, L.z);
+    } else {
+      var a2=t*0.05;
+      camera.position.set(Math.sin(a2)*6, 5, Z_END+Math.cos(a2)*5);
+      camera.lookAt(0,2,Z_END-30);
+    }
+
+    var coverOn = p<0.075 && !beyond;
+    coverHero.classList.toggle('visible', coverOn);
+
+    var ci=0;
+    for(var si2=0; si2<stations.length; si2++){
+      var s=stations[si2];
+      var on=Math.abs(p-s.c)<s.w && !beyond;
+      if(on!==s.on){ s.on=on; s.el.classList.toggle('visible',on); }
+      if(p>s.c-s.w) ci=si2;
+    }
+    if(beyond) ci=7;
+    var inFlight=Math.abs(p-0.50)<0.075 && !beyond;
+    projectLabel(lblA,CH_W,inFlight); projectLabel(lblB,MP_W,inFlight);
+    if(inFlight && kmShown<KM){ kmShown=Math.min(KM,kmShown+90); kmEl.textContent=kmShown.toLocaleString('en-US')+' km'; }
+
+    if(ci!==lastCh){ chLabel.textContent = beyond ? 'EPILOGUE' : (coverOn ? 'PROLOGUE' : CH_NAMES[ci+1]); lastCh=ci; }
+    var bw=Math.round(p*100);
+    if(bw!==lastBar){ chBar.style.width=bw+'%'; lastBar=bw; }
+    cue.style.opacity = p<0.012 ? 1 : 0;
+
+    renderer.render(scene,camera);
+  }
+  animate();
+})();
+
+document.querySelectorAll('.acc-item').forEach(function(item){
+  var btn=item.querySelector('.acc-btn'), body=item.querySelector('.acc-body');
+  btn.addEventListener('click', function(){
+    var open=item.classList.contains('open');
+    item.parentElement.querySelectorAll('.acc-item.open').forEach(function(o){
+      o.classList.remove('open'); o.querySelector('.acc-body').style.maxHeight='0px';
+    });
+    if(!open){ item.classList.add('open'); body.style.maxHeight=body.scrollHeight+'px'; }
+  });
+});
+var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting) e.target.classList.add('in'); }); },{threshold:0.12});
+document.querySelectorAll('.fade').forEach(function(el){ io.observe(el); });
+
+// ================= EN / FR TRANSLATIONS =================
+var I18N = {
+  'nav-work':   { en:'Work', fr:'Travaux' },
+  'nav-faq':    { en:'FAQ', fr:'FAQ' },
+  'nav-contact':{ en:'Contact', fr:'Contact' },
+
+  'hero-eye':  { en:'Supply Chain × Data Systems — Portfolio', fr:'Supply Chain × Systèmes de Données — Portfolio' },
+  'hero-desc': { en:'I catch data errors before they reach a dashboard — the same discipline I once used to catch defects before they reached a customer. Ex-Hyundai quality control, now building live data pipelines for a French luxury textile maison.<div class="open-pill" data-i18n="hero-pill">Open to work</div>',
+                 fr:'Je détecte les erreurs de données avant qu\u2019elles n\u2019atteignent un tableau de bord — la même rigueur qu\u2019autrefois pour détecter les défauts avant qu\u2019ils n\u2019atteignent un client. Ex-contrôle qualité chez Hyundai, aujourd\u2019hui je construis des pipelines de données en direct pour une maison textile de luxe française.<div class="open-pill" data-i18n="hero-pill">Ouvert aux opportunités</div>' },
+  'hero-pill': { en:'Open to work', fr:'Ouvert aux opportunités' },
+  'hero-meta': { en:'<b>MSc Supply Chain &amp; Logistics</b><br>Montpellier Business School<br>Chambéry, France',
+                 fr:'<b>MSc Supply Chain &amp; Logistique</b><br>Montpellier Business School<br>Chambéry, France' },
+
+  'ch1-eye': { en:'Chapter 01 — The Foundation', fr:'Chapitre 01 — Les Fondations' },
+  'ch1-h':   { en:'Mechanical<br>Engineering.', fr:'Génie<br>Mécanique.' },
+  'ch1-p':   { en:'B.E. Mechanical Engineering, Panimalar Engineering College. Before data, there were <b>gears, tolerances, and load calculations</b> — the discipline of a system that has to work exactly as specified, every time.',
+               fr:'Licence en Génie Mécanique, Panimalar Engineering College. Avant les données, il y avait <b>les engrenages, les tolérances et les calculs de charge</b> — la rigueur d\u2019un système qui doit fonctionner exactement comme prévu, à chaque fois.' },
+  'ch1-spec':{ en:'<div><span>Location</span><span>Chennai, India</span></div><div><span>Period</span><span>2019 — 2023</span></div><div><span>Degree</span><span>B.E. Mechanical Eng.</span></div>',
+               fr:'<div><span>Lieu</span><span>Chennai, Inde</span></div><div><span>Période</span><span>2019 — 2023</span></div><div><span>Diplôme</span><span>Licence Génie Méc.</span></div>' },
+
+  'ch2-eye': { en:'Chapter 02 — Ashok Leyland', fr:'Chapitre 02 — Ashok Leyland' },
+  'ch2-h':   { en:'The test rig<br>taught me to<br>measure everything.', fr:'Le banc d\u2019essai<br>m\u2019a appris à<br>tout mesurer.' },
+  'ch2-p':   { en:'Heavy commercial vehicles, scanned line by line against <b>IS &amp; EU compliance frameworks</b> — performance, safety, emissions. First industry lesson: a spec isn\u2019t an opinion.',
+               fr:'Des poids lourds, contrôlés ligne par ligne selon les <b>normes de conformité IS et UE</b> — performance, sécurité, émissions. Première leçon du métier : une norme n\u2019est pas une opinion.' },
+  'ch2-spec':{ en:'<div><span>Location</span><span>Chennai, India</span></div><div><span>Period</span><span>Feb — Mar 2023</span></div><div><span>Role</span><span>Vehicle Testing Intern</span></div>',
+               fr:'<div><span>Lieu</span><span>Chennai, Inde</span></div><div><span>Période</span><span>Fév — Mars 2023</span></div><div><span>Poste</span><span>Stagiaire Essais Véhicules</span></div>' },
+
+  'ch3-eye': { en:'Chapter 03 — Hyundai Motor India', fr:'Chapitre 03 — Hyundai Motor India' },
+  'ch3-h':   { en:'The last checkpoint<br>before a customer' + String.fromCharCode(39) + 's car.', fr:'Le dernier contrôle<br>avant la voiture<br>d\u2019un client.' },
+  'ch3-p':   { en:'One year in <b>Pre-Delivery Inspection</b> — the final quality gate before dealership release, at the exact handoff where manufacturing meets logistics.',
+               fr:'Un an en <b>Inspection Avant Livraison</b> — le dernier contrôle qualité avant la sortie concession, exactement à l\u2019interface entre production et logistique.' },
+  'ch3-spec':{ en:'<div><span>Location</span><span>Tamil Nadu, India</span></div><div><span>Period</span><span>Aug 2023 — Aug 2024</span></div><div><span>Role</span><span>PDI Associate</span></div>',
+               fr:'<div><span>Lieu</span><span>Tamil Nadu, Inde</span></div><div><span>Période</span><span>Août 2023 — Août 2024</span></div><div><span>Poste</span><span>Associé PDI</span></div>' },
+
+  'ch4-eye': { en:'Chapter 04 — The Crossing', fr:'Chapitre 04 — La Traversée' },
+  'ch4-h':   { en:'15.09.2025.<br>Chennai → France.', fr:'15.09.2025.<br>Chennai → France.' },
+  'ch4-p':   { en:'Boarded a flight out of Chennai, Tamil Nadu, and landed in France to begin a Master\u2019s in <b>Logistics &amp; Supply Chain Management at Montpellier Business School</b>. One bet: the discipline travels with you.',
+               fr:'Embarqué sur un vol depuis Chennai, Tamil Nadu, et arrivé en France pour commencer un Master en <b>Logistique et Supply Chain Management à Montpellier Business School</b>. Un pari : la rigueur voyage avec vous.' },
+  'ch4-spec':{ en:'<div><span>Departed</span><span>Chennai · 15 Sep 2025</span></div><div><span>Destination</span><span>Montpellier, France</span></div><div><span>Distance</span><span id="km">0 km</span></div>',
+               fr:'<div><span>Départ</span><span>Chennai · 15 sept. 2025</span></div><div><span>Destination</span><span>Montpellier, France</span></div><div><span>Distance</span><span id="km">0 km</span></div>' },
+
+  'ch5-eye': { en:'Chapter 05 — Montpellier Business School', fr:'Chapitre 05 — Montpellier Business School' },
+  'ch5-h':   { en:'Learning to see<br>the whole network.', fr:'Apprendre à voir<br>tout le réseau.' },
+  'ch5-p':   { en:'<b>MSc Logistics, Materials &amp; Supply Chain Management.</b> Demand planning, procurement, inventory optimization, network design. Dissertation: <i style="color:var(--ink)">"Inventory Inaccuracy in Automotive Supply Chains."</i>',
+               fr:'<b>MSc Logistique, Matériaux et Supply Chain Management.</b> Planification de la demande, achats, optimisation des stocks, conception de réseaux. Mémoire : <i style="color:var(--ink)">« Inexactitude des stocks dans les chaînes logistiques automobiles ».</i>' },
+  'ch5-spec':{ en:'<div><span>Location</span><span>Montpellier, France</span></div><div><span>Period</span><span>Sep 2025 — present</span></div><div><span>Supervisor</span><span>Rameshwar Dubey</span></div>',
+               fr:'<div><span>Lieu</span><span>Montpellier, France</span></div><div><span>Période</span><span>Sept. 2025 — présent</span></div><div><span>Superviseur</span><span>Rameshwar Dubey</span></div>' },
+
+  'ch6-eye': { en:'Chapter 06 — Inata, Chambéry', fr:'Chapitre 06 — Inata, Chambéry' },
+  'ch6-h':   { en:'Luxury alpaca textiles,<br>woven with data.', fr:'Textiles d\u2019alpaga de luxe,<br>tissés avec des données.' },
+  'ch6-p':   { en:'Supply Chain / Data Automation Intern for a French luxury alpaca-fibre maison. Found the dashboards <b>reporting revenue 3× off reality</b> — and rebuilt the flow from source to screen.',
+               fr:'Stagiaire Supply Chain / Automatisation des Données pour une maison française de fibre d\u2019alpaga de luxe. Les tableaux de bord <b>affichaient un chiffre d\u2019affaires 3 fois supérieur à la réalité</b> — j\u2019ai reconstruit le flux de la source à l\u2019écran.' },
+  'ch6-spec':{ en:'<div><span>Location</span><span>Chambéry, France</span></div><div><span>Period</span><span>Jul 2026 — present</span></div><div><span>Found</span><span>3× drift · 19 hidden overdue</span></div>',
+               fr:'<div><span>Lieu</span><span>Chambéry, France</span></div><div><span>Période</span><span>Juil. 2026 — présent</span></div><div><span>Détecté</span><span>Écart 3× · 19 retards cachés</span></div>' },
+
+  'ch7-eye': { en:'Chapter 07 — The Evidence', fr:'Chapitre 07 — Les Preuves' },
+  'ch7-h':   { en:'Six chapters.<br>Five proofs.', fr:'Six chapitres.<br>Cinq preuves.' },
+  'ch7-p':   { en:'Keep scrolling — the actual work, code, and dashboards are just below.', fr:'Continuez à défiler — le travail réel, le code et les tableaux de bord sont juste en dessous.' },
+
+  'work-eye': { en:'Evidence, not claims', fr:'Des preuves, pas des affirmations' },
+  'work-h':   { en:'Selected<br><span>Work</span>', fr:'Travaux<br><span>Sélectionnés</span>' },
+  'w1-q': { en:'Airtable → Power BI Live Connector', fr:'Connecteur en direct Airtable → Power BI' },
+  'w1-a': { en:'Power BI was reading <b>static Excel exports</b> off SharePoint — every figure a stale snapshot. I traced the mismatch to its source and built the replacement: paginated Airtable API extraction, Make orchestration, Python validation, straight into Power BI.',
+            fr:'Power BI lisait des <b>exports Excel statiques</b> depuis SharePoint — chaque chiffre était un instantané périmé. J\u2019ai remonté à la source du problème et construit le remplacement : extraction paginée via l\u2019API Airtable, orchestration Make, validation Python, directement vers Power BI.' },
+  'w2-q': { en:'Control Tower Executive Dashboard', fr:'Tableau de Bord Exécutif Control Tower' },
+  'w2-a': { en:'Board-level supply chain visibility in a dark <b>Microsoft Fabric</b> language — KPI cards, region revenue, pipeline health, live-sync state — fed by the connector rather than a manual export.',
+            fr:'Visibilité supply chain de niveau direction dans un style sombre <b>Microsoft Fabric</b> — cartes KPI, chiffre d\u2019affaires par région, état du pipeline, synchronisation en direct — alimenté par le connecteur plutôt que par un export manuel.' },
+  'w3-q': { en:'Cross-Platform Pipeline &amp; Airtable Redesign', fr:'Pipeline Multi-Plateforme &amp; Refonte Airtable' },
+  'w3-a': { en:'<b>Google Sheets → Airtable → Power BI.</b> Spreadsheet silos merged into one automated flow; Airtable interface views rebuilt for daily operations; native automations removing repetitive entry.',
+            fr:'<b>Google Sheets → Airtable → Power BI.</b> Les silos de tableurs fusionnés en un seul flux automatisé ; vues d\u2019interface Airtable reconstruites pour les opérations quotidiennes ; automatisations natives supprimant la saisie répétitive.' },
+  'w4-q': { en:'INATA Digital — WordPress &amp; Next.js Spec', fr:'INATA Digital — WordPress &amp; Spécification Next.js' },
+  'w4-a': { en:'Live company site maintained on <b>WordPress</b>; forward-looking rebuild spec authored — <b>Next.js 14, React Three Fiber, GSAP</b>, bilingual FR/EN with a B2B quotation wizard.',
+            fr:'Site de l\u2019entreprise maintenu en direct sur <b>WordPress</b> ; spécification de refonte rédigée — <b>Next.js 14, React Three Fiber, GSAP</b>, bilingue FR/EN avec un assistant de devis B2B.' },
+  'w5-q': { en:'MSc Dissertation — Inventory Inaccuracy', fr:'Mémoire de Master — Inexactitude des Stocks' },
+  'w5-a': { en:'<i style="color:var(--ink)">"Inventory Inaccuracy in Automotive Supply Chains: An Operational and Data-Driven Perspective."</i> The academic mirror of the exact gap caught at Inata: recorded data vs physical reality.',
+            fr:'<i style="color:var(--ink)">« Inexactitude des stocks dans les chaînes logistiques automobiles : une perspective opérationnelle et data-driven ».</i> Le miroir académique de l\u2019écart exact détecté chez Inata : données enregistrées contre réalité physique.' },
+
+  'faq-eye': { en:'For recruiters', fr:'Pour les recruteurs' },
+  'faq-h':   { en:'Frequently<br><span>Asked</span>', fr:'Questions<br><span>Fréquentes</span>' },
+  'q1-q': { en:'Authorized to work in France / the EU?', fr:'Autorisé à travailler en France / dans l\u2019UE ?' },
+  'q1-a': { en:'Yes — French Student Visa (VLS-TS), based in Chambéry. Open to roles across Europe and to relocation.',
+            fr:'Oui — Visa étudiant français (VLS-TS), basé à Chambéry. Ouvert aux postes partout en Europe et à la relocalisation.' },
+  'q2-q': { en:'What roles are you looking for?', fr:'Quels postes recherchez-vous ?' },
+  'q2-a': { en:'Supply chain &amp; logistics (demand planning, procurement, inventory optimization) and data/BI — the overlap is the sweet spot.',
+            fr:'Supply chain et logistique (planification de la demande, achats, optimisation des stocks) et data/BI — l\u2019intersection des deux est l\u2019idéal.' },
+  'q3-q': { en:'What languages do you speak?', fr:'Quelles langues parlez-vous ?' },
+  'q3-a': { en:'English (full professional), French (limited working), Tamil (native), Telugu &amp; Malayalam (professional).',
+            fr:'Anglais (professionnel complet), français (professionnel limité), tamoul (langue maternelle), télougou et malayalam (professionnel).' },
+  'q4-q': { en:'Can I see real work, not just claims?', fr:'Puis-je voir du travail réel, pas seulement des affirmations ?' },
+  'q4-a': { en:'Yes — live dashboard demo and runnable connector script above. Sample data; real method.',
+            fr:'Oui — démo de tableau de bord en direct et script connecteur exécutable ci-dessus. Données d\u2019exemple ; méthode réelle.' },
+
+  'contact-eye': { en:'Final approach', fr:'Approche finale' },
+  'contact-h':   { en:'Let' + String.fromCharCode(39) + 's<br><span>Talk</span>', fr:'Discutons<br><span>Ensemble</span>' },
+  'f-lbl-name':  { en:'Name', fr:'Nom' },
+  'f-lbl-email': { en:'Email', fr:'E-mail' },
+  'f-lbl-msg':   { en:'Message', fr:'Message' },
+  'f-send':      { en:'Send message', fr:'Envoyer le message' },
+  'f-again':     { en:'Send another', fr:'Envoyer un autre' },
+  'f-sent':      { en:'MESSAGE PREPARED — your mail client just opened, pre-filled.<br>If it didn' + String.fromCharCode(39) + 't: yogeshmuthukumar29@gmail.com',
+                   fr:'MESSAGE PRÉPARÉ — votre client mail vient de s\u2019ouvrir, pré-rempli.<br>Sinon : yogeshmuthukumar29@gmail.com' },
+  'side-email':  { en:'yogeshmuthukumar29@gmail.com', fr:'yogeshmuthukumar29@gmail.com' },
+  'side-cv':     { en:'Download CV', fr:'Télécharger le CV' }
+};
+
+function setLang(lang){
+  document.querySelectorAll('[data-i18n]').forEach(function(el){
+    var key=el.getAttribute('data-i18n');
+    if(I18N[key] && I18N[key][lang]!==undefined){ el.innerHTML=I18N[key][lang]; }
+  });
+  document.querySelectorAll('#langsw button').forEach(function(b){
+    b.classList.toggle('on', b.dataset.lang===lang);
+  });
+  document.documentElement.setAttribute('lang', lang);
+}
+document.querySelectorAll('#langsw button').forEach(function(b){
+  b.addEventListener('click', function(){ setLang(b.dataset.lang); });
+});
+
+var EMAIL='yogeshmuthukumar29@gmail.com';
+document.getElementById('f-send').addEventListener('click', function(){
+  var n=document.getElementById('f-name').value.trim();
+  var e=document.getElementById('f-email').value.trim();
+  var m=document.getElementById('f-msg').value.trim();
+  var err=document.getElementById('f-err');
+  if(!n){ err.textContent='Please enter your name.'; return; }
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){ err.textContent='Please enter a valid email.'; return; }
+  if(m.length<10){ err.textContent='Message should be at least 10 characters.'; return; }
+  err.textContent='';
+  window.open('mailto:'+EMAIL+'?subject='+encodeURIComponent('Portfolio contact — '+n)+'&body='+encodeURIComponent('From: '+n+' <'+e+'>\n\n'+m),'_blank');
+  document.getElementById('form-zone').style.display='none';
+  document.getElementById('sent-zone').style.display='block';
+});
+document.getElementById('f-again').addEventListener('click', function(){
+  document.getElementById('form-zone').style.display='block';
+  document.getElementById('sent-zone').style.display='none';
+  ['f-name','f-email','f-msg'].forEach(function(id){ document.getElementById(id).value=''; });
+});
+document.getElementById('dl-cv').addEventListener('click', function(){
+  var txt='YOGESH MUTHUKUMAR\nMSc Supply Chain & Logistics | Ex-Hyundai QC -> Data-Driven SCM\nChambery, France - yogeshmuthukumar29@gmail.com\nLinkedIn: linkedin.com/in/yogesh-muthukumar-38501221b\nWork Authorization: French Student Visa (VLS-TS)\n\nEXPERIENCE\nSupply Chain / Data Automation Intern - INATA (2026-present, Chambery, France)\n- Live Airtable->Power BI pipeline (Make + Python) across 15+ linked tables\n- Caught ~3x revenue drift; surfaced 19 hidden overdue orders\nPre-Delivery Inspection Associate - Hyundai Motor India (Aug 2023 - Aug 2024)\nVehicle Testing Intern - Ashok Leyland (Feb - Mar 2023)\n\nEDUCATION\nMSc Logistics, Materials & Supply Chain Mgmt - Montpellier Business School (Sep 2025-)\nDissertation: Inventory Inaccuracy in Automotive Supply Chains\nB.E. Mechanical Engineering - Panimalar Engineering College, Chennai (2019-2023)\n\nSKILLS\nAirtable - Make - Power BI - DAX - Power Query M - Python - WordPress - SAP MM\nRegression Analysis - Inventory Management - ERP/WMS\n\nLANGUAGES\nEnglish (full professional) - French (limited working) - Tamil (native)\nTelugu (professional) - Malayalam (professional)';
+  var b=new Blob([txt],{type:'text/plain'});
+  var u=URL.createObjectURL(b);
+  var a=document.createElement('a'); a.href=u; a.download='Yogesh_Muthukumar_CV.txt'; a.click();
+  URL.revokeObjectURL(u);
+});
+</script>
+</body>
+</html>
